@@ -59,6 +59,36 @@ func (c CommonParams) toPayLoad() url.Values {
 	return p
 }
 
+type DomainSearchParam struct {
+	Type    string
+	Offset  string
+	Length  string
+	GroupId string
+	Keyword string
+}
+
+func (c DomainSearchParam) toPayLoad() url.Values {
+	p := url.Values{}
+
+	if c.Type != "" {
+		p.Set("type", c.Type)
+	}
+	if c.Offset != ""{
+		p.Set("offset", c.Offset)
+	}
+	if c.Length != "" {
+		p.Set("length", c.Length)
+	}
+	if c.GroupId != "" {
+		p.Set("group_id", c.GroupId)
+	}
+	if c.Keyword != "" {
+		p.Set("keyword", c.Keyword)
+	}
+
+	return p
+}
+
 // Status is the status representation.
 type Status struct {
 	Code      string `json:"code,omitempty"`

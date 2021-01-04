@@ -75,9 +75,11 @@ type DomainsService struct {
 // List the domains.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/domains.html#domain-list
-func (s *DomainsService) List() ([]Domain, *Response, error) {
+func (s *DomainsService) List( sp *DomainSearchParam) ([]Domain, *Response, error) {
 	payload := s.client.CommonParams.toPayLoad()
-
+	for k,v := range sp.toPayLoad(){
+		payload.Set(k,v[0])
+	}
 	returnedDomains := domainListWrapper{}
 
 	res, err := s.client.post(methodDomainList, payload, &returnedDomains)
