@@ -1,6 +1,7 @@
 package dnspod
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -10,11 +11,12 @@ const (
 	methodRecordInfo   = "Record.Info"
 	methodRecordRemove = "Record.Remove"
 	methodRecordModify = "Record.Modify"
+	methodRecordRemark = "Record.Remark"
 )
 
 // Record is the DNS record representation.
 type Record struct {
-	ID            string `json:"id,omitempty"`
+	ID            json.Number `json:"id,omitempty"`
 	Name          string `json:"name,omitempty"`
 	Line          string `json:"line,omitempty"`
 	LineID        string `json:"line_id,omitempty"`
@@ -52,11 +54,15 @@ type RecordsService struct {
 // List List the domain records.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/records.html#record-list
-func (s *RecordsService) List(domainID string, recordName string) ([]Record, *Response, error) {
+func (s *RecordsService) List(domainID string, recordName string, recordType string) ([]Record, *Response, error) {
 	payload := s.client.CommonParams.toPayLoad()
 	payload.Add("domain_id", domainID)
 	if recordName != "" {
 		payload.Add("sub_domain", recordName)
+	}
+
+	if recordType != "" {
+		payload.Add("record_type", recordType)
 	}
 
 	wrappedRecords := recordsWrapper{}
@@ -155,8 +161,16 @@ func (s *RecordsService) Update(domain string, recordID string, recordAttributes
 	payload := s.client.CommonParams.toPayLoad()
 	payload.Add("domain_id", domain)
 
+	if recordAttributes.ID != "" {
+		payload.Add("record_id", string(recordAttributes.ID))
+	}
+
 	if recordAttributes.Name != "" {
 		payload.Add("sub_domain", recordAttributes.Name)
+	}
+
+	if recordAttributes.ID == "" && recordID!= "" {
+		payload.Add("record_id", recordID)
 	}
 
 	if recordAttributes.Type != "" {
@@ -190,6 +204,39 @@ func (s *RecordsService) Update(domain string, recordID string, recordAttributes
 	returnedRecord := recordWrapper{}
 
 	res, err := s.client.post(methodRecordModify, payload, &returnedRecord)
+	if err != nil {
+		return Record{}, res, err
+	}
+
+	if returnedRecord.Status.Code != "1" {
+		return returnedRecord.Record, nil, fmt.Errorf("could not get domains: %s", returnedRecord.Status.Message)
+	}
+
+	return returnedRecord.Record, res, nil
+}
+
+// Remark Updates a domain record Remark.
+//
+// dnspod API docs: https://www.dnspod.cn/docs/records.html#record-remark
+func (s *RecordsService) Remark(domain string, recordID string, recordAttributes Record) (Record, *Response, error) {
+	payload := s.client.CommonParams.toPayLoad()
+	payload.Add("domain_id", domain)
+
+	if recordAttributes.ID != "" {
+		payload.Add("record_id", string(recordAttributes.ID))
+	}
+
+	if recordAttributes.ID == "" && recordID!= "" {
+		payload.Add("record_id", recordID)
+	}
+
+	if recordAttributes.Remark != "" {
+		payload.Add("remark", recordAttributes.Remark)
+	}
+
+	returnedRecord := recordWrapper{}
+
+	res, err := s.client.post(methodRecordRemark, payload, &returnedRecord)
 	if err != nil {
 		return Record{}, res, err
 	}
