@@ -3,6 +3,7 @@ package dnspod
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 )
 
@@ -72,17 +73,46 @@ type DomainsService struct {
 	client *Client
 }
 
+type DomainListRequest struct {
+	CommonParams
+	Type    string
+	Offset  string
+	Length  string
+	GroupId string
+	Keyword string
+}
+
+func (c *DomainListRequest) toPayLOad() url.Values {
+	p := c.CommonParams.toPayLoad()
+
+	if c.Type != "" {
+		p.Set("type", c.Type)
+	}
+	if c.Offset != "" {
+		p.Set("offset", c.Offset)
+	}
+	if c.Length != "" {
+		p.Set("length", c.Length)
+	}
+	if c.GroupId != "" {
+		p.Set("group_id", c.GroupId)
+	}
+	if c.Keyword != "" {
+		p.Set("keyword", c.Keyword)
+	}
+
+	return p
+}
+
 // List the domains.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/domains.html#domain-list
-func (s *DomainsService) List( sp *DomainSearchParam) ([]Domain, *Response, error) {
-	payload := s.client.CommonParams.toPayLoad()
-	for k,v := range sp.toPayLoad(){
-		payload.Set(k,v[0])
-	}
+func (s *DomainsService) List(request *DomainListRequest) ([]Domain, *Response, error) {
+	payLoad := request.toPayLOad()
+
 	returnedDomains := domainListWrapper{}
 
-	res, err := s.client.post(methodDomainList, payload, &returnedDomains)
+	res, err := s.client.post(methodDomainList, payLoad, &returnedDomains)
 	if err != nil {
 		return nil, res, err
 	}

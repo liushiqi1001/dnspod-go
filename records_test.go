@@ -26,7 +26,7 @@ func TestRecordsService_ListRecords_all(t *testing.T) {
 			]}`)
 	})
 
-	records, _, err := client.Records.List("example.com", "","")
+	records, _, err := client.Records.List(&RecordListRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +55,7 @@ func TestRecordsService_ListRecords_subdomain(t *testing.T) {
 			]}`)
 	})
 
-	records, _, err := client.Records.List("11223344", "@","")
+	records, _, err := client.Records.List(&RecordListRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}

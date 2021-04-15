@@ -33,7 +33,7 @@ func TestDomainsService_List(t *testing.T) {
 			]}`)
 	})
 
-	domains, _, err := client.Domains.List(&DomainSearchParam{Keyword: "example"})
+	domains, _, err := client.Domains.List(&DomainListRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,7 +70,7 @@ func TestDomainsService_List_Ambiguous_Value(t *testing.T) {
 			]}`)
 	})
 
-	domains, _, err := client.Domains.List(&DomainSearchParam{})
+	domains, _, err := client.Domains.List(&DomainListRequest{})
 	if err != nil {
 		t.Fatal(err)
 	}

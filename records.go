@@ -3,6 +3,7 @@ package dnspod
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 )
 
 const (
@@ -17,19 +18,19 @@ const (
 // Record is the DNS record representation.
 type Record struct {
 	ID            json.Number `json:"id,omitempty"`
-	Name          string `json:"name,omitempty"`
-	Line          string `json:"line,omitempty"`
-	LineID        string `json:"line_id,omitempty"`
-	Type          string `json:"type,omitempty"`
-	TTL           string `json:"ttl,omitempty"`
-	Value         string `json:"value,omitempty"`
-	MX            string `json:"mx,omitempty"`
-	Enabled       string `json:"enabled,omitempty"`
-	Status        string `json:"status,omitempty"`
-	MonitorStatus string `json:"monitor_status,omitempty"`
-	Remark        string `json:"remark,omitempty"`
-	UpdateOn      string `json:"updated_on,omitempty"`
-	UseAQB        string `json:"use_aqb,omitempty"`
+	Name          string      `json:"name,omitempty"`
+	Line          string      `json:"line,omitempty"`
+	LineID        string      `json:"line_id,omitempty"`
+	Type          string      `json:"type,omitempty"`
+	TTL           string      `json:"ttl,omitempty"`
+	Value         string      `json:"value,omitempty"`
+	MX            string      `json:"mx,omitempty"`
+	Enabled       string      `json:"enabled,omitempty"`
+	Status        string      `json:"status,omitempty"`
+	MonitorStatus string      `json:"monitor_status,omitempty"`
+	Remark        string      `json:"remark,omitempty"`
+	UpdateOn      string      `json:"updated_on,omitempty"`
+	UseAQB        string      `json:"use_aqb,omitempty"`
 }
 
 type recordsWrapper struct {
@@ -51,19 +52,56 @@ type RecordsService struct {
 	client *Client
 }
 
+type RecordListRequest struct {
+	CommonParams
+	DomainId     string
+	Domain       string
+	Offset       string
+	Length       string
+	SubDomain    string
+	RecordType   string
+	RecordLine   string
+	RecordLIneId string
+	KeyWord      string
+}
+
+func (r *RecordListRequest) toPayLOad() url.Values {
+	p := r.CommonParams.toPayLoad()
+	if r.DomainId != "" {
+		p.Add("domain_id",r.DomainId)
+	}
+	if r.Domain != "" {
+		p.Add("domain",r.Domain)
+	}
+	if r.Offset != "" {
+		p.Add("offset",r.Offset)
+	}
+	if r.Length != "" {
+		p.Add("length",r.Length)
+	}
+	if r.SubDomain != "" {
+		p.Add("sub_domain",r.SubDomain)
+	}
+	if r.RecordType != "" {
+		p.Add("record_type",r.RecordType)
+	}
+	if r.RecordLine != "" {
+		p.Add("record_line",r.RecordLine)
+	}
+	if r.RecordLIneId != "" {
+		p.Add("record_line_id" ,r.RecordLIneId)
+	}
+	if r.KeyWord != "" {
+		p.Add("keyword",r.KeyWord)
+	}
+	return p
+}
+
 // List List the domain records.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/records.html#record-list
-func (s *RecordsService) List(domainID string, recordName string, recordType string) ([]Record, *Response, error) {
-	payload := s.client.CommonParams.toPayLoad()
-	payload.Add("domain_id", domainID)
-	if recordName != "" {
-		payload.Add("sub_domain", recordName)
-	}
-
-	if recordType != "" {
-		payload.Add("record_type", recordType)
-	}
+func (s *RecordsService) List(request *RecordListRequest) ([]Record, *Response, error) {
+	payload := request.toPayLOad()
 
 	wrappedRecords := recordsWrapper{}
 
@@ -169,7 +207,7 @@ func (s *RecordsService) Update(domain string, recordID string, recordAttributes
 		payload.Add("sub_domain", recordAttributes.Name)
 	}
 
-	if recordAttributes.ID == "" && recordID!= "" {
+	if recordAttributes.ID == "" && recordID != "" {
 		payload.Add("record_id", recordID)
 	}
 
@@ -226,7 +264,7 @@ func (s *RecordsService) Remark(domain string, recordID string, recordAttributes
 		payload.Add("record_id", string(recordAttributes.ID))
 	}
 
-	if recordAttributes.ID == "" && recordID!= "" {
+	if recordAttributes.ID == "" && recordID != "" {
 		payload.Add("record_id", recordID)
 	}
 
