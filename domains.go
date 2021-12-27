@@ -12,6 +12,7 @@ const (
 	methodDomainCreate = "Domain.Create"
 	methodDomainInfo   = "Domain.Info"
 	methodDomainRemove = "Domain.Remove"
+	methodDomainLog    = "Domain.Log"
 )
 
 // DomainInfo handles domain information.
@@ -66,11 +67,46 @@ type domainWrapper struct {
 	Domain Domain     `json:"domain"`
 }
 
+// domainLogWrapper wraps the domain log.
+type domainLogWrapper struct {
+	Status Status   `json:"status"`
+	Log    []string `json:"log"`
+}
+
 // DomainsService handles communication with the domain related methods of the dnspod API.
 //
 // dnspod API docs: https://www.dnspod.cn/docs/domains.html
 type DomainsService struct {
 	client *Client
+}
+
+// DomainLogRequest is the request struct for DomainLog.
+type DomainLogRequest struct {
+	CommonParams
+	DomainId string
+	Domain   string
+	Offset   int
+	Length   int
+}
+
+// toPayLoad returns the payload for the domain log request.
+func (c *DomainLogRequest) toPayLoad() url.Values {
+	p := c.CommonParams.toPayLoad()
+	if c.DomainId != "" {
+		p.Set("domain_id", c.DomainId)
+	} else {
+		p.Set("domain", c.Domain)
+	}
+
+	if c.Offset != 0 {
+		p.Set("offset", strconv.Itoa(c.Offset))
+	}
+
+	if c.Length != 0 {
+		p.Set("length", strconv.Itoa(c.Length))
+	}
+
+	return p
 }
 
 type DomainListRequest struct {
@@ -170,4 +206,23 @@ func (s *DomainsService) Delete(id int) (*Response, error) {
 	returnedDomain := domainWrapper{}
 
 	return s.client.post(methodDomainRemove, payload, &returnedDomain)
+}
+
+// Get Domain Log.
+//
+// dnspod API docs: https://dnsapi.cn/Domain.Log
+func (s *DomainsService) Log(request *DomainLogRequest) ([]string, error) {
+	payload := request.toPayLoad()
+	returnedDomain := domainLogWrapper{}
+
+	_, err := s.client.post(methodDomainLog, payload, &returnedDomain)
+	if err != nil {
+		return nil, err
+	}
+
+	if returnedDomain.Status.Code != "1" {
+		return nil, fmt.Errorf("could not get domain logs: %s", returnedDomain.Status.Message)
+	}
+
+	return returnedDomain.Log, nil
 }
